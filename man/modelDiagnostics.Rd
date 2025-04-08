@@ -10,7 +10,7 @@ modelDiagnostics(
   significance_level = 0.05,
   on.fitted = TRUE,
   format = NULL,
-  round = 4,
+  round = 3,
   model.class = NULL
 )
 }
@@ -42,15 +42,13 @@ and normality. The function adapts its tests based on the model type.
 }
 \examples{
 # Using built-in cars dataset
-data(cars)
-model <- lm(dist ~ speed, data = cars)
+data(longley)
+model <- lm(Unemployed ~ GNP, data = longley)
 diagnostics <- modelDiagnostics(model)
 
 # With custom model class
+data(longley)
+model <- lm(Unemployed ~ GNP, data = longley)
 diagnostics <- modelDiagnostics(model, model.class = "lm")
-
-# With LaTeX output
-diagnostics <- modelDiagnostics(model, format = "latex")
-dev.off() # Fermer le périphérique graphique
 
 }

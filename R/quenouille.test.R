@@ -71,17 +71,17 @@ quenouille.test <- function(x, lags = NULL, alpha = 0.05) {
     cat("No break corresponding to AR process\n")
     cat(strrep("-----", 8), "\n")
     #return(NULL)
-    methods::show(forecast::ggPacf(x, lag.max = lags))
+    methods::show( pacf(x,  lag.max = lags, na.action = stats::na.pass) )
   } else {
     cat("Suggested AR process order:", results, "\n")
     cat(strrep("-----", 8), "\n")
-    methods::show(forecast::ggPacf(x, lag.max = lags))
+    methods::show( pacf(x,  lag.max = lags, na.action = stats::na.pass) )
 
     # Return results as a list
     invisible(list(
       AR.order.p = results,
       Quenouille.limit = quenouille_limits,
-      pacf.plot = forecast::ggPacf(x, lag.max = lags)
+      pacf.plot = pacf(x,  lag.max = lags, na.action = stats::na.pass)
     ))
   }
 }

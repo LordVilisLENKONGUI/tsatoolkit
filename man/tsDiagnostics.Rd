@@ -4,14 +4,14 @@
 \alias{tsDiagnostics}
 \title{Plot Ts, ACF and PACF figures}
 \usage{
-tsDiagnostics(y, x = NULL, lag = 20)
+tsDiagnostics(y, x = NULL, lags = 20)
 }
 \arguments{
 \item{y}{Vector of numerical values}
 
 \item{x}{Vector of datetime, default is NULL}
 
-\item{lag}{Maximum number of lags to compute, default is 20}
+\item{lags}{Maximum number of lags to compute, default is 20}
 }
 \value{
 A combined plot of geom_line_plot, ACF and PACF using patchwork and KPSS test of stationary result
