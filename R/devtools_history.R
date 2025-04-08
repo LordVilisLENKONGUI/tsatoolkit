@@ -1,0 +1,18 @@
+#usethis::use_package("dplyr")
+usethis::use_package("moments")
+usethis::use_package("stats")
+usethis::use_package("forecast")
+usethis::use_package("ggplot2")
+usethis::use_package("patchwork")
+usethis::use_package("kableExtra")
+usethis::use_package("sandwich")
+usethis::use_package("methods")
+usethis::use_package("base")
+usethis::use_package("FinTS")
+usethis::use_package("lmtest")
+usethis::use_package("tseries")
+usethis::use_package("MSwM")
+usethis::use_build_ignore("devtools_history.R")
+
+
+#devtools::build(binary = TRUE, args = c('--preclean'))
