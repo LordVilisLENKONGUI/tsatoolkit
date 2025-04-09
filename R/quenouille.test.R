@@ -18,6 +18,7 @@
 #'   \item AR.order.p: The suggested order of the AR process
 #'   \item Quenouille.limit: The confidence interval threshold
 #'   \item pacf.plot: A ggplot2 object showing the PACF with significance bounds
+#'   \item Obs The number of observations in the time series
 #' }
 #'
 #' @details
@@ -50,7 +51,7 @@ quenouille.test <- function(x, lags = NULL, alpha = 0.05) {
   n <- length(x)
 
   # If no lags specified, calculate default using length of series
-  if(is.null(lags)) lags <- floor(10 * log10(n))
+  if(is.null(lags) || lags >= base::length(x)) lags <- floor(10 * log10(n))
 
   # Calculate Quenouille limits (according to theorem)
   # For two-sided test with alpha significance level
@@ -67,21 +68,26 @@ quenouille.test <- function(x, lags = NULL, alpha = 0.05) {
   cat("Quenouille Test\n")
   cat("Confidence interval:", round(quenouille_limits, 4), "\n")
 
+
+  pltPacf <- pacf(x,  lag.max = lags, na.action = stats::na.pass)
+  pltPacf$snames <- deparse(substitute(x))
+
   if (is.na(results) || results == 0) {
-    cat("No break corresponding to AR process\n")
+    cat("No break corresponding to AR process /!\ \n")
     cat(strrep("-----", 8), "\n")
     #return(NULL)
-    methods::show( pacf(x,  lag.max = lags, na.action = stats::na.pass) )
+    methods::show( pltPacf )
   } else {
     cat("Suggested AR process order:", results, "\n")
     cat(strrep("-----", 8), "\n")
-    methods::show( pacf(x,  lag.max = lags, na.action = stats::na.pass) )
+    methods::show( pltPacf )
 
     # Return results as a list
     invisible(list(
       AR.order.p = results,
       Quenouille.limit = quenouille_limits,
-      pacf.plot = pacf(x,  lag.max = lags, na.action = stats::na.pass)
+      pacf.plot = pltPacf,
+      Obs = pltPacf$n.used
     ))
   }
 }

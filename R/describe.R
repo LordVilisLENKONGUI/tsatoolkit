@@ -16,8 +16,8 @@
 #'
 #' @examples
 #' # Example with a numeric vector
-#' x <- c(1, 2, 3, 4, 5)
-#' describe(x)
+#' data("longley")
+#' describe(longley)
 #'
 #' # Example with missing values
 #' describe(c(NA, rnorm(1997)))
