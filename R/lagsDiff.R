@@ -31,7 +31,7 @@ lagsDiff <- function(dataset, diff.vars = NULL, lag.vars = NULL, diff.log.vars =
       for (i in 1:max.differences) {
         if (max.differences > 1) {
           diff_col <- c(rep(NA, i), diff(dataset[[var]], differences=i))
-          dataset[[paste0("d", i, var)]] <- round(diff_col, 3)
+          dataset[[paste0("d.", i, ".", var)]] <- round(diff_col, 3)
         } else{
           diff_col <- c(rep(NA, i), diff(dataset[[var]], differences=i))
           dataset[[paste0("d", var)]] <- round(diff_col, 3)

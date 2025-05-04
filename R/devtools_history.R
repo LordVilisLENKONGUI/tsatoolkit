@@ -1,4 +1,5 @@
-#usethis::use_package("dplyr")
+usethis::use_package("dplyr")
+usethis::use_package("magrittr")
 usethis::use_package("moments")
 usethis::use_package("stats")
 usethis::use_package("forecast")
