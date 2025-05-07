@@ -20,8 +20,8 @@
 #' @importFrom dplyr group_by count sym
 #' @importFrom magrittr %>%
 #'
+#'@export
 #'
-#' @export
 balance.pdata <- function(data, index) {
 
   if (!inherits(data, c("pdata.frame", "data.frame" ))) {
