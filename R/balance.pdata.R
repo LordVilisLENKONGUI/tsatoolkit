@@ -40,6 +40,12 @@ balance.pdata <- function(data, index) {
 
   # 4. Extract the name of the date column
   date_col_name <- names(data_subset)[which(sapply(data_subset, function(x) inherits(x, "Date")))]
+  if (length(date_col_name) == 0) {
+    stop("pdataframe must have one column in datetime format")
+  } else if (length(date_col_name) > 1) {
+    warning("Multiple Date columns found. Using the first one: ", date_col_name[1])
+    date_col_name <- date_col_name[1]
+  }
   #date_col_name <- names(data_subset)[which(sapply(data_subset, is.Date))]
 
   # 5. Extract the available dates for this individual
