@@ -20,6 +20,7 @@ A list containing three elements:
 \item AR.order.p: The suggested order of the AR process
 \item Quenouille.limit: The confidence interval threshold
 \item pacf.plot: A ggplot2 object showing the PACF with significance bounds
+\item Obs The number of observations in the time series
 }
 }
 \description{
