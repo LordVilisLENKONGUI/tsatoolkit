@@ -25,7 +25,7 @@ modelDiagnostics(
 
 \item{format}{Output format for the table: "rst", "pandoc" or "latex". If NULL, defaults to "rst"}
 
-\item{round}{Number of decimal places in output (default: 4)}
+\item{round}{Number of decimal places in output (default: 3)}
 
 \item{model.class}{Character vector specifying valid model types. If NULL, uses model's class}
 }

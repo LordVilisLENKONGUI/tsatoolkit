@@ -11,7 +11,6 @@ RoxygenNote: 7.3.2
 Imports: 
     base,
     dplyr,
-    FinTS,
     forecast,
     ggplot2,
     kableExtra,

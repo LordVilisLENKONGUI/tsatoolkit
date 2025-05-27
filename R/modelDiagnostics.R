@@ -10,7 +10,7 @@
 #' @param significance_level Significance level for hypothesis tests (default: 0.05)
 #' @param on.fitted Use fitted values for White test (default: TRUE)
 #' @param format Output format for the table: "rst", "pandoc" or "latex". If NULL, defaults to "rst"
-#' @param round Number of decimal places in output (default: 4)
+#' @param round Number of decimal places in output (default: 3)
 #' @param model.class Character vector specifying valid model types. If NULL, uses model's class
 #'
 #' @return A list object of class 'post_diagnostics' containing:
@@ -32,14 +32,13 @@
 #' @importFrom stats acf na.omit qqline qqnorm residuals model.matrix terms model.frame model.response lm.fit pchisq Box.test
 #' @importFrom lmtest bgtest
 #' @importFrom tseries jarque.bera.test
-#' @importFrom FinTS ArchTest
 #' @importFrom kableExtra kable
 #' @importFrom graphics par lines abline
 #'
 #' @export
 modelDiagnostics <- function(model, lags = 20, significance_level = 0.05,
-                              on.fitted = TRUE, format = NULL, round = 3,
-                              model.class = NULL) {
+                             on.fitted = TRUE, format = NULL, round = 3,
+                             model.class = NULL) {
   # Define supported model types
   supported_types <- c("lm", "glm", "ardl", "arma", "dynardl", "ar", "MSM.lm")
 
@@ -77,7 +76,6 @@ modelDiagnostics <- function(model, lags = 20, significance_level = 0.05,
   }
 
   # Extract residuals based on model type
-
   residuals_model <- tryCatch({
     switch(model.class,
            "lm" = residuals(model),
@@ -109,6 +107,7 @@ modelDiagnostics <- function(model, lags = 20, significance_level = 0.05,
     class = "post_diagnostics"
   )
 
+  # Plot for ts
   if ( inherits(model, c("ar", "arma", "ardl", "dynardl", "MSM.lm")) ) {
 
     par(mfrow=c(2,2),
@@ -139,10 +138,6 @@ modelDiagnostics <- function(model, lags = 20, significance_level = 0.05,
 
   }
 
-
-
-
-
   # White test implementation
   white.test <- function(model, on.fitted = TRUE, summary = FALSE) {
     # For dynardl models, extract the underlying lm model
@@ -152,23 +147,32 @@ modelDiagnostics <- function(model, lags = 20, significance_level = 0.05,
 
     # Extract model matrix and response
     X <- stats::model.matrix(stats::terms(model), stats::model.frame(model))
-    X <- X[, which(colSums(X == 1) != nrow(X))]
+    # Ensure X is a matrix and remove intercept-only columns
+    if (is.vector(X)) X <- matrix(X, ncol = 1)
+    if (ncol(X) > 1) {
+      X <- X[, which(colSums(X == 1) != nrow(X)), drop = FALSE]
+    }
     y <- stats::model.response(stats::model.frame(model))
 
     # Calculate residuals and fitted values
-    resid <- stats::lm.fit(X, y)$residuals
+    fit_result <- stats::lm.fit(X, y)
+    resid <- fit_result$residuals
     squared_residuals <- resid^2
-    fitted <- stats::lm.fit(X, y)$fitted
+    fitted <- fit_result$fitted.values
 
-    n <- nrow(X)
+    n <- length(resid)
     k <- ncol(X)
 
     # Perform White test
     if (!on.fitted) {
-      X_2 <- X^2
-      colnames(X_2) <- paste0(colnames(X_2), "^2")
-      X <- cbind(X, X_2)
-      white.model <- stats::lm(squared_residuals ~ X)
+      if (ncol(X) > 1) {
+        X_2 <- X^2
+        colnames(X_2) <- paste0(colnames(X), "^2")
+        X_combined <- cbind(X, X_2)
+      } else {
+        X_combined <- cbind(X, X^2)
+      }
+      white.model <- stats::lm(squared_residuals ~ X_combined)
       method <- "White LM test on explanatory"
       df <- k
     } else {
@@ -197,18 +201,76 @@ modelDiagnostics <- function(model, lags = 20, significance_level = 0.05,
     # Autocorrelation tests
     if (model.class %in% c("lm", "glm")) {
       results$autocorr_bg <- lmtest::bgtest(model)
-    } else if (model.class %in% c("ardl", "arma", "dynardl", "MSM.lm")) {
-      results$autocorr_lb <- stats::Box.test(residuals_model,
-                                             lag = lags,
-                                             type = "Ljung-Box")
+    } else if (model.class %in% c("ardl", "arma", "dynardl", "ar", "MSM.lm")) {
+      # Safe lags for Ljung-Box test
+      safe_lags_lb <- min(lags, length(residuals_model) - 1)
+      if (safe_lags_lb > 0) {
+        results$autocorr_lb <- stats::Box.test(residuals_model,
+                                               lag = safe_lags_lb,
+                                               type = "Ljung-Box")
+      }
     }
 
-    # Heteroscedasticity tests
+    # Heteroscedasticity tests WHITE & ARCH
     if (model.class %in% c("lm", "glm")) {
       results$hetero_white <- white.test(model, on.fitted = on.fitted)
     }
-    if (model.class %in% c("ardl", "dynardl", "arma", "MSM.lm")) {
-      results$hetero_Arch <- FinTS::ArchTest(residuals_model, lags = lags)
+
+    if (model.class %in% c("ardl", "dynardl", "ar", "arma", "MSM.lm")) {
+      # ARCH test with safe parameters
+      arch.test <- function(y, lags = NULL) {
+        # Extract residuals according to object type
+        if (is.numeric(y)) {
+          uhat <- y
+          uhatnames <- deparse(substitute(y))
+        } else {
+          model.class <- class(y)[1]
+          uhat <- switch(model.class,
+                         "lm" = residuals(y),
+                         "ardl" = residuals(y),
+                         "dynlm" = residuals(y),
+                         "arma" = residuals(y),
+                         "ar" = residuals(y),
+                         "dynardl" = y$model$residuals,
+                         "MSM.lm" = MSwM::msmResid(y),
+                         residuals(y))
+          uhatnames <- "Model Residuals"
+        }
+
+        T <- base::length(uhat)
+        if (is.null(lags)) lags <- max(1, floor(T^0.25))
+
+        # Safe checks for embedding dimension
+        if (lags >= T) {
+          lags <- max(1, T - 2)
+        }
+        if (lags + 1 > T) {
+          stop("Insufficient observations for ARCH test")
+        }
+
+        X <- stats::embed(uhat^2, lags + 1)
+        lm_model <- stats::lm(X[, 1] ~ X[, -1])
+
+        # ARCH statistic and p-value
+        R2 <- summary(lm_model)$r.squared
+        arch_stat <- nrow(X) * R2
+        names(arch_stat) <- "Chi-squared"
+        p_value <- 1 - stats::pchisq(arch_stat, df = lags)
+
+        METHOD <- "ARCH LM-test"
+        result <- list(statistic = round(arch_stat, 4),
+                       parameter = lags,
+                       p.value = round(p_value, 4),
+                       method = METHOD,
+                       data.name = uhatnames,
+                       alternative = "ARCH effects")
+        class(result) <- "htest"
+        return(result)
+      }
+
+      # Use safe lags for ARCH test
+      safe_lags <- min(lags, max(1, floor(length(residuals_model)^0.25)))
+      results$hetero_Arch <- arch.test(model, lags = safe_lags)
     }
 
     # Normality test
@@ -296,4 +358,3 @@ print.post_diagnostics <- function(x, ...) {
   print(x$summary)
   invisible(x)
 }
-
