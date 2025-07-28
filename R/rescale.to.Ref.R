@@ -59,4 +59,5 @@ rescale.to.Ref <- function(var_to_scale, ref_var) {
   scaled_var[valid_idx] <- min_ref + (var_clean - min_var) * (max_ref - min_ref) / (max_var - min_var)
 
   return(scaled_var)
+
 }
