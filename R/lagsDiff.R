@@ -31,7 +31,7 @@ lagsDiff <- function(dataset, diff.vars = NULL, lag.vars = NULL, diff.log.vars =
       for (i in 1:max.differences) {
         if (max.differences > 1) {
           diff_col <- c(rep(NA, i), diff(dataset[[var]], differences=i))
-          dataset[[paste0("d.", i, ".", var)]] <- round(diff_col, 3)
+          dataset[[paste0("d", i, "_", var)]] <- round(diff_col, 3)
         } else{
           diff_col <- c(rep(NA, i), diff(dataset[[var]], differences=i))
           dataset[[paste0("d", var)]] <- round(diff_col, 3)
@@ -58,7 +58,7 @@ lagsDiff <- function(dataset, diff.vars = NULL, lag.vars = NULL, diff.log.vars =
     for (var in lag.vars) {
       if (!var %in% names(dataset)) stop(paste("Variable", var, "not found in dataset"))
       for (i in 1:max.lags) {
-        dataset[[paste0("l.", i, ".", var)]] <- c(rep(NA, i), dataset[[var]][1:(length(dataset[[var]]) - i)])
+        dataset[[paste0("lag", i, "_", var)]] <- c(rep(NA, i), dataset[[var]][1:(length(dataset[[var]]) - i)])
       }
     }
   }
