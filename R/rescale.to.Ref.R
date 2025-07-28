@@ -11,6 +11,7 @@
 #'   return \code{NA}.
 #'
 #' @export
+#'
 rescale.to.Ref <- function(var_to_scale, ref_var) {
   # Input validation
   if (!is.numeric(var_to_scale) || !is.numeric(ref_var)) {
