@@ -4,17 +4,34 @@
 \alias{ARCH.test}
 \title{ARCH Lagrange Multiplier Test for Conditional Heteroskedasticity}
 \usage{
-ARCH.test(y, lags = NULL, max.lags = 10)
+ARCH.test(
+  y,
+  lags = NULL,
+  max.lags = 10,
+  table.output = TRUE,
+  format = "rst",
+  round = 4
+)
 }
 \arguments{
 \item{y}{A fitted model object (e.g., \code{lm}, \code{ardl},...) or a numeric vector.}
 
 \item{lags}{Integer specifying the number of lags to test for ARCH effects. If
 \code{NULL}, the number of lags is selected based on the Akaike Information
-Criterion (AIC) with a maximum lags set to 10,}
+Criterion (AIC) with a maximum lags set to 10.}
 
 \item{max.lags}{Integer specifying the maximum number of lags to consider when
 automatically selecting lags via AIC. Defaults to 10.}
+
+\item{table.output}{Logical. If TRUE, returns a table with statistics for each lag.
+If FALSE, returns only the test for the specified number of lags. Defaults to TRUE.}
+
+\item{format}{Character string specifying the output format for the table when
+\code{table.output = TRUE}. Accepts formats supported by \code{kable()}.
+Defaults to "rst". Set to NULL to return a plain data frame.}
+
+\item{round}{Integer specifying the number of decimal places to round the results.
+Defaults to 4.}
 }
 \value{
 An object of class \code{htest} containing:

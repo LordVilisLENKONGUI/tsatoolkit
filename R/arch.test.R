@@ -6,11 +6,16 @@
 #' @param y A fitted model object (e.g., \code{lm}, \code{ardl},...) or a numeric vector.
 #' @param lags Integer specifying the number of lags to test for ARCH effects. If
 #'   \code{NULL}, the number of lags is selected based on the Akaike Information
-#'   Criterion (AIC) with a maximum lags set to 10,
+#'   Criterion (AIC) with a maximum lags set to 10.
 #' @param max.lags Integer specifying the maximum number of lags to consider when
 #'   automatically selecting lags via AIC. Defaults to 10.
-#'
-#'
+#' @param table.output Logical. If TRUE, returns a table with statistics for each lag.
+#'   If FALSE, returns only the test for the specified number of lags. Defaults to TRUE.
+#' @param format Character string specifying the output format for the table when
+#'   \code{table.output = TRUE}. Accepts formats supported by \code{kable()}.
+#'   Defaults to "rst". Set to NULL to return a plain data frame.
+#' @param round Integer specifying the number of decimal places to round the results.
+#'   Defaults to 4.
 #'
 #' @return An object of class \code{htest} containing:
 #' \itemize{
@@ -33,10 +38,12 @@
 #' residuals <- rnorm(100)
 #' ARCH.test(residuals, lags = 2)
 #'
-#' @importFrom stats embed lm pchisq residuals
+#' @importFrom stats embed lm pchisq residuals BIC
 #' @export
 #'
-ARCH.test <- function(y, lags = NULL, max.lags = 10) {
+ARCH.test <- function(y, lags = NULL, max.lags = 10, table.output = TRUE,
+                      format = "rst", round = 4) {
+
   # Extract residuals based on input type
   if (is.numeric(y)) {
     uhat <- y
@@ -104,32 +111,78 @@ ARCH.test <- function(y, lags = NULL, max.lags = 10) {
     stop("Insufficient observations for ARCH test")
   }
 
-  # Create lagged matrix of squared residuals for ARCH test
-  X <- stats::embed(uhat^2, lags + 1)
-  # Fit linear model of squared residuals on their lags
-  lm_model <- stats::lm(X[, 1] ~ X[, -1])
+  # Helper function to compute ARCH test for a specific lag
+  compute_arch_test <- function(residuals, lag_order) {
+    # Create lagged matrix of squared residuals for ARCH test
+    X <- stats::embed(residuals^2, lag_order + 1)
+    # Fit linear model of squared residuals on their lags
+    lm_model <- stats::lm(X[, 1] ~ X[, -1])
 
-  # Compute ARCH test statistic and p-value
-  R2 <- summary(lm_model)$r.squared
-  arch_stat <- nrow(X) * R2  # Test statistic: T * R^2
-  names(arch_stat) <- "Chi-squared"
-  p_value <- 1 - stats::pchisq(arch_stat, df = lags)  # P-value from chi-squared distribution
+    # Compute ARCH test statistic and p-value
+    R2 <- summary(lm_model)$r.squared
+    arch_stat <- nrow(X) * R2  # Test statistic: T * R^2
+    p_value <- 1 - stats::pchisq(arch_stat, df = lag_order)  # P-value from chi-squared distribution
 
-  # Define test method
-  METHOD <- "ARCH LM-test"
-  # Name the lags parameter for output
-  names(lags) <- "df"
-  # Create result object
-  result <- list(statistic = round(arch_stat, 4),
-                 parameter = lags,
-                 p.value = round(p_value, 4),
-                 method = METHOD,
-                 data.name = uhatnames,
-                 alternative = "ARCH effects")
-  class(result) <- "htest"
-  return(result)
+    return(list(statistic = arch_stat, p.value = p_value, df = lag_order))
+  }
+
+  # If table output is requested, compute tests for all lags from 1 to specified lags
+  if (table.output) {
+    # Create vectors to store test statistics and p-values
+    lag_vector <- 1:lags
+    chi_stats <- numeric(lags)
+    p_values <- numeric(lags)
+
+    # Calculate statistics for each lag from 1 to lags
+    for (i in 1:lags) {
+      test_result <- compute_arch_test(uhat, i)
+      chi_stats[i] <- base::round(test_result$statistic, round)
+      p_values[i] <- base::round(test_result$p.value, round)
+    }
+
+    # Create results matrix
+    result <- data.frame(
+      Lag = lag_vector,
+      `Chi-squared` = chi_stats,
+      `p-value` = p_values,
+      check.names = FALSE
+    )
+
+    # Format output based on format parameter
+    if (is.null(format)) {
+      return(result)
+    } else {
+      if (requireNamespace("kableExtra", quietly = TRUE)) {
+        formatted_table <- kableExtra::kable(result, format = format,
+                                             align = rep("c", ncol(result)),
+                                             caption = "ARCH LM-test for Multiple Lags")
+        return(formatted_table)
+      } else {
+        warning("kableExtra package not available. Returning data frame.")
+        return(result)
+      }
+    }
+
+  } else {
+    # Single test result (original behavior)
+    test_result <- compute_arch_test(uhat, lags)
+
+    # Create result object
+    arch_stat <- test_result$statistic
+    p_value <- test_result$p.value
+    names(arch_stat) <- "Chi-squared"
+    names(lags) <- "df"
+
+    # Define test method
+    METHOD <- "ARCH LM-test"
+
+    result <- list(statistic = round(arch_stat, round),
+                   parameter = lags,
+                   p.value = round(p_value, round),
+                   method = METHOD,
+                   data.name = uhatnames,
+                   alternative = "ARCH effects")
+    class(result) <- "htest"
+    return(result)
+  }
 }
-
-
-
-
