@@ -207,7 +207,7 @@ modelDiagnostics <- function(model, lags = 20, significance_level = 0.05,
       safe_lags_lb <- min(lags, length(residuals_model) - 1)
       if (safe_lags_lb > 0) {
         results$autocorr_lb <- stats::Box.test(residuals_model,
-                                               lag = safe_lags_lb,
+                                               lag = lags,
                                                type = "Ljung-Box")
       }
     }
