@@ -4,7 +4,7 @@
 \alias{ARCH.test}
 \title{ARCH Test for Conditional Heteroskedasticity}
 \usage{
-ARCH.test(x, lag = 10, format = NULL, round = 3)
+ARCH.test(x, lags = 10, format = NULL, round = 3)
 }
 \arguments{
 \item{x}{A fitted model object (e.g., \code{lm}, \code{ardl}, \code{dynlm},
@@ -12,7 +12,7 @@ ARCH.test(x, lag = 10, format = NULL, round = 3)
 For model objects, residuals are automatically extracted.
 For numeric vectors, the series is used directly, for fitted model squared residuals are used}
 
-\item{lag}{Integer specifying the maximum number of lags to test for ARCH
+\item{lags}{Integer specifying the maximum number of lags to test for ARCH
 effects. The function will test all lags from 1 to \code{lag}.
 Must be less than the length of the series. Defaults to 10.}
 
@@ -57,7 +57,7 @@ The alternative hypothesis is the presence of ARCH effects (heteroskedastic erro
 set.seed(123)
 data <- data.frame(y = rnorm(100), x = rnorm(100))
 lm_model <- lm(y ~ x, data = data)
-ARCH.test(lm_model, lag = 5)
+ARCH.test(lm_model, lags = 5)
 }
 
 }

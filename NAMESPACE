@@ -55,6 +55,3 @@ importFrom(stats,residuals)
 importFrom(stats,terms)
 importFrom(stats,var)
 importFrom(tseries,jarque.bera.test)
-
-
-#usethis::use_package("FinTS", type = "Imports")

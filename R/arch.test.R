@@ -8,7 +8,7 @@
 #'   \code{arma}, \code{ar}, \code{dynardl}, \code{MSM.lm}) or a numeric vector.
 #'   For model objects, residuals are automatically extracted.
 #'   For numeric vectors, the series is used directly, for fitted model squared residuals are used
-#' @param lag Integer specifying the maximum number of lags to test for ARCH
+#' @param lags Integer specifying the maximum number of lags to test for ARCH
 #'   effects. The function will test all lags from 1 to \code{lag}.
 #'   Must be less than the length of the series. Defaults to 10.
 #' @param format Character string specifying the output format for the table.
@@ -45,7 +45,7 @@
 #' set.seed(123)
 #' data <- data.frame(y = rnorm(100), x = rnorm(100))
 #' lm_model <- lm(y ~ x, data = data)
-#' ARCH.test(lm_model, lag = 5)
+#' ARCH.test(lm_model, lags = 5)
 #' }
 #'
 #' @seealso
@@ -55,7 +55,7 @@
 #' @importFrom stats residuals
 #' @importFrom kableExtra kable
 #' @export
-ARCH.test <- function(x, lag=10, format = NULL, round=3) {
+ARCH.test <- function(x, lags=10, format = NULL, round=3) {
 
   # Extract residuals based on input type
   if (is.numeric(x)) {
@@ -79,16 +79,16 @@ ARCH.test <- function(x, lag=10, format = NULL, round=3) {
   }
 
   n <- length(uhat)
-  if (lag >= n) {
+  if (lags >= n) {
     stop("lag must be less than the length of the series")
   }
 
   # Create vectors to store LM statistics and p-values
-  LM_stats <- numeric(lag)
-  p_values <- numeric(lag)
+  LM_stats <- numeric(lags)
+  p_values <- numeric(lags)
 
   # Calculate statistics for each lag from 1 to lag using FinTS::ArchTest
-  for (i in 1:lag) {
+  for (i in 1:lags) {
     # Use FinTS::ArchTest function
     arch_result <- FinTS::ArchTest(uhat, lags = i)
 
@@ -98,7 +98,7 @@ ARCH.test <- function(x, lag=10, format = NULL, round=3) {
   }
 
   # Create results matrix
-  result <- cbind(1:lag, LM_stats, p_values)
+  result <- cbind(1:lags, LM_stats, p_values)
   colnames(result) <- c("lag", "ARCH-LM", "p-value")
 
   if (is.null(format)) {

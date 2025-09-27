@@ -4,12 +4,12 @@
 \alias{ljung.box.test}
 \title{Ljung-Box Test}
 \usage{
-ljung.box.test(x, lag = 10, format = NULL, round = 3)
+ljung.box.test(x, lags = 10, format = NULL, round = 3)
 }
 \arguments{
 \item{x}{vector of numerical time series}
 
-\item{lag}{maximum lag}
+\item{lags}{maximum lag}
 
 \item{format}{Output format for the table: "rst", "pandoc" or "latex". If NULL, defaults to "rst"}
 
@@ -20,9 +20,4 @@ a knitr_kable formatted table with descriptive statistics
 }
 \description{
 This function compute the Ljung-Box test statistic for examining the null hypothesis of no autocorrelation in a given time series
-}
-\examples{
-set.seed(1)
-tsatoolkit::ljung.box.test(rnorm(100))
-
 }
