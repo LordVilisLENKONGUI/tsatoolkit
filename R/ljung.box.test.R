@@ -16,24 +16,6 @@
 #'
 ljung.box.test <- function(x, lag=10, format = NULL, round=3) {
 
-  # Function to calculate autocorrelation
-  autocorrelation <- function(x, lag=10) {
-    n <- length(x)
-    if (lag >= n) {
-      stop("Lag must be less than the length of the series")
-    }
-
-    # Center the series
-    x_mean <- base::mean(x)
-    x_centered <- x - x_mean
-
-    # Calculate autocorrelation
-    numerator <- base::sum(x_centered[(lag+1):n] * x_centered[1:(n-lag)])
-    denominator <- base::sum(x_centered^2)
-
-    return(numerator / denominator)
-  }
-
   n <- length(x)
   if (lag >= n) {
     stop("lag must be less than the length of the series")
@@ -43,20 +25,14 @@ ljung.box.test <- function(x, lag=10, format = NULL, round=3) {
   Q_stats <- numeric(lag)
   p_values <- numeric(lag)
 
-  # Calculate statistics for each lag from 1 to lag
+  # Calculate statistics for each lag from 1 to lag using stats::Box.test
   for (i in 1:lag) {
-    # Calculate autocorrelations up to lag i
-    rho_squares <- numeric(i)
-    for (j in 1:i) {
-      rho <- autocorrelation(x, j)
-      rho_squares[j] <- (rho^2) / (n-j)
-    }
+    # Use the built-in Box.test function (which implements Ljung-Box test by default)
+    box_result <- stats::Box.test(x, lag = i, type = "Ljung-Box")
 
-    # Calculate Q statistic for lag i
-    Q_stats[i] <- base::round(n * (n + 2) * base::sum(rho_squares), round)
-
-    # Calculate p-value
-    p_values[i] <- base::round(1 - stats::pchisq(Q_stats[i], df = i), round)
+    # Extract Q statistic and p-value
+    Q_stats[i] <- base::round(box_result$statistic, round)
+    p_values[i] <- base::round(box_result$p.value, round)
   }
 
   # Create results matrix

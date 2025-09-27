@@ -2,61 +2,65 @@
 % Please edit documentation in R/arch.test.R
 \name{ARCH.test}
 \alias{ARCH.test}
-\title{ARCH Lagrange Multiplier Test for Conditional Heteroskedasticity}
+\title{ARCH Test for Conditional Heteroskedasticity}
 \usage{
-ARCH.test(
-  y,
-  lags = NULL,
-  max.lags = 10,
-  table.output = TRUE,
-  format = "rst",
-  round = 4
-)
+ARCH.test(x, lag = 10, format = NULL, round = 3)
 }
 \arguments{
-\item{y}{A fitted model object (e.g., \code{lm}, \code{ardl},...) or a numeric vector.}
+\item{x}{A fitted model object (e.g., \code{lm}, \code{ardl}, \code{dynlm},
+\code{arma}, \code{ar}, \code{dynardl}, \code{MSM.lm}) or a numeric vector.
+For model objects, residuals are automatically extracted.
+For numeric vectors, the series is used directly, for fitted model squared residuals are used}
 
-\item{lags}{Integer specifying the number of lags to test for ARCH effects. If
-\code{NULL}, the number of lags is selected based on the Akaike Information
-Criterion (AIC) with a maximum lags set to 10.}
+\item{lag}{Integer specifying the maximum number of lags to test for ARCH
+effects. The function will test all lags from 1 to \code{lag}.
+Must be less than the length of the series. Defaults to 10.}
 
-\item{max.lags}{Integer specifying the maximum number of lags to consider when
-automatically selecting lags via AIC. Defaults to 10.}
+\item{format}{Character string specifying the output format for the table.
+Accepts formats supported by \code{kableExtra::kable()}.
+If \code{NULL}, uses "rst" format. Set to specific format for customized output.}
 
-\item{table.output}{Logical. If TRUE, returns a table with statistics for each lag.
-If FALSE, returns only the test for the specified number of lags. Defaults to TRUE.}
-
-\item{format}{Character string specifying the output format for the table when
-\code{table.output = TRUE}. Accepts formats supported by \code{kable()}.
-Defaults to "rst". Set to NULL to return a plain data frame.}
-
-\item{round}{Integer specifying the number of decimal places to round the results.
-Defaults to 4.}
+\item{round}{Integer specifying the number of decimal places to round the
+test statistics and p-values. Defaults to 3.}
 }
 \value{
-An object of class \code{htest} containing:
+A formatted table (using \code{kableExtra::kable}) containing:
 \itemize{
-\item \code{statistic}: The test statistic (Chi-squared).
-\item \code{parameter}: The number of lags (degrees of freedom).
-\item \code{p.value}: The p-value of the test.
-\item \code{method}: The name of the test ("ARCH LM-test").
-\item \code{data.name}: The name of the input data or "Model Residuals".
-\item \code{alternative}: The alternative hypothesis ("ARCH effects").
+\item \code{lag}: The lag number (1 to \code{lag})
+\item \code{LM}: The ARCH LM test statistic for each lag
+\item \code{p-value}: The p-value for each test statistic
 }
 }
 \description{
-Performs the Lagrange Multiplier test to detect the presence of
-Autoregressive Conditional Heteroskedasticity (ARCH).
+Performs an ARCH test using the Lagrange Multiplier (LM) approach to detect
+the presence of Autoregressive Conditional Heteroskedasticity (ARCH) effects
+in a time series or model residuals.
+}
+\details{
+The ARCH test is implemented using the Lagrange Multiplier (LM) test from
+\code{FinTS::ArchTest}. This is the standard approach in econometrics for
+testing ARCH effects. The test statistic follows a chi-squared distribution
+under the null hypothesis of no ARCH effects.
+
+For each lag from 1 to \code{lag}, the function computes:
+\itemize{
+\item The ARCH LM test statistic using auxiliary regression
+\item The corresponding p-value using the chi-squared distribution
+}
+
+The null hypothesis is that there are no ARCH effects (homoskedastic errors).
+The alternative hypothesis is the presence of ARCH effects (heteroskedastic errors).
 }
 \examples{
+\dontrun{
 # Example with a linear model
 set.seed(123)
 data <- data.frame(y = rnorm(100), x = rnorm(100))
 lm_model <- lm(y ~ x, data = data)
-ARCH.test(lm_model)
+ARCH.test(lm_model, lag = 5)
+}
 
-# Example with numeric residuals
-residuals <- rnorm(100)
-ARCH.test(residuals, lags = 2)
-
+}
+\seealso{
+\code{\link[FinTS]{ArchTest}} for the underlying ARCH LM test implementation.
 }
