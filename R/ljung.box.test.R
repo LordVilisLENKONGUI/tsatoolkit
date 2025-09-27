@@ -24,7 +24,7 @@ ljung.box.test <- function(x, lags=10, format = NULL, round=3) {
   # Calculate statistics for each lag from 1 to lag using stats::Box.test
   for (i in 1:lags) {
     # Use the built-in Box.test function (which implements Ljung-Box test by default)
-    box_result <- stats::Box.test(x, lag = lags, type = "Ljung-Box")
+    box_result <- stats::Box.test(x, lag = i, type = "Ljung-Box")
 
     # Extract Q statistic and p-value
     Q_stats[i] <- base::round(box_result$statistic, round)
@@ -49,3 +49,4 @@ ljung.box.test <- function(x, lags=10, format = NULL, round=3) {
   cat(sprintf("Ljung-Box Autocorrelation Test"))
   return(result)
 }
+
