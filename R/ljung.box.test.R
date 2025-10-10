@@ -22,7 +22,7 @@ ljung.box.test <- function(x, lags = 10, format = NULL, round = 3) {
   ac_values <- numeric(lags)
 
   # Calculate ACF once for all lags
-  box_ac <- stats::acf(x, lag.max = lags, plot = FALSE, type = "correlation")
+  box_ac <- stats::acf(x, lag.max = (lags+1), plot = FALSE, type = "correlation")
 
   # Extract all AC values at once (excluding lag 0)
   box_ac <- as.numeric(box_ac$acf)[-1]  # Remove lag 0
