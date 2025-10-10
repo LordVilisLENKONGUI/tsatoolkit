@@ -34,19 +34,28 @@ ljung.box.test <- function(x, lags = 10, format = NULL, round = 3) {
 
     # Extract Q statistic and p-value
     Q_stats[i] <- base::round(box_result$statistic, round)
-    p_values[i] <- base::round(box_result$p.value, round)
+    p_values[i] <- box_result$p.value
     # Use pre-extracted AC values
     ac_values[i] <- base::round(box_ac[i], round)
   }
+
+  formatted_pvalues <- sapply(p_values, function(p) {
+    if (p < 0.001) {
+      "0.000"
+    } else {
+      format(round(p, round), nsmall = round)
+    }
+  })
 
   # Create results data frame (not matrix) for better control
   result <- data.frame(
     Lag = 1:lags,
     AC = ac_values,
     Q = Q_stats,
-    "p-value" = p_values,
+    "p-value" = formatted_pvalues,
     check.names = FALSE
   )
+
 
   # Format table
   if (is.null(format)) {
