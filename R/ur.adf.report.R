@@ -57,7 +57,7 @@ ur.adf.report <- function(y) {
   }
 
 
-  ur.df.trend <- urca::ur.df(y, type='trend', lags = base::trunc((length(y)-1)^(1/3)), selectlags = "AIC")
+  ur.df.trend <- urca::ur.df(y, type='trend', lags = trunc(12 * (length(y)/100)^(1/4)), selectlags = "AIC")
   ur.df.trend.rowselec <- get_rowselec(N)
   #trend.stats <- ct[ur.df.trend.rowselec, ]
   ur.df.trend.nlags <- ur.df.trend@lags
@@ -69,7 +69,7 @@ ur.adf.report <- function(y) {
   base::rownames(ur.df.trend.results) <- c(greekLetters::greeks("rho"), greekLetters::greeks("phi"), base::paste0(greekLetters::greeks("beta"),"t"))
 
 
-  ur.df.drift <- urca::ur.df(y, type='drift', lags = base::trunc((length(y)-1)^(1/3)), selectlags = "AIC")
+  ur.df.drift <- urca::ur.df(y, type='drift', lags = trunc(12 * (length(y)/100)^(1/4)), selectlags = "AIC")
   ur.df.drift.rowselec <- get_rowselec(N)
   #ur.df.drift.stats <- const[ur.df.drift.rowselec, ]
   ur.df.drift.nlags <- ur.df.drift@lags
@@ -81,7 +81,7 @@ ur.adf.report <- function(y) {
   base::rownames(ur.df.drift.results) <- c(greekLetters::greeks("rho"), greekLetters::greeks("phi"))
 
 
-  ur.df.none <- urca::ur.df(y, type='none', lags = base::trunc((length(y)-1)^(1/3)), selectlags = "AIC")
+  ur.df.none <- urca::ur.df(y, type='none', lags = trunc(12 * (length(y)/100)^(1/4)), selectlags = "AIC")
   ur.df.none.nlags <- ur.df.none@lags
   ur.df.none.stats <- ur.df.none@teststat
   ur.df.none.critval <- ur.df.none@cval
