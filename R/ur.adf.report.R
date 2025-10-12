@@ -21,6 +21,7 @@
 #'
 #' @export
 
+
 ur.adf.report <- function(y) {
 
 
@@ -95,13 +96,14 @@ ur.adf.report <- function(y) {
   cat("###################################", "\n")
   print(ur.df.trend.results)
   cat(" ", "\n")
-  if (base::abs(ur.df.trend.results@testreg$coefficients[3,3]) < ur.df.trend.results[3,3]) {
+  if (ur.df.trend.results[3,1] < ur.df.trend.results[3,3]) {
     cat("Trend not significant at 5%", "\n")
   }else cat("Trend significant at 5%", "\n")
   if (ur.df.trend.results[1,1] > ur.df.trend.results[1,3]) {
     cat("Evidence of unit root at 5%", "\n")
   }else cat("Rejection of unit root at 5%", "\n")
   cat("Lags :" , ur.df.trend@lags, "\n")
+  cat("Obs  :" , N, "\n")
   cat(" ", "\n")
 
 
@@ -111,13 +113,14 @@ ur.adf.report <- function(y) {
   cat("###################################", "\n")
   print(ur.df.drift.results)
   cat(" ", "\n")
-  if (base::abs(ur.df.drift.results@testreg$coefficients[2,1]) < ur.df.drift.results[2,3]) {
+  if (ur.df.drift.results[2,1] < ur.df.drift.results[2,3]) {
     cat("Constant not significant at 5%", "\n")
   }else cat("Constant significant at 5%", "\n")
   if (ur.df.drift.results[1,1] > ur.df.drift.results[1,3]) {
     cat("Evidence of unit root at 5%", "\n")
   }else cat("Rejection of unit root at 5%", "\n")
   cat("Lags :" , ur.df.drift@lags, "\n")
+  cat("Obs  :" , N, "\n")
   cat(" ", "\n")
 
   # ADF Model 1
@@ -130,6 +133,7 @@ ur.adf.report <- function(y) {
     cat("Evidence of unit root at 5%", "\n")
   }else cat("Rejection of unit root at 5%", "\n")
   cat("Lags :" , ur.df.none@lags, "\n")
+  cat("Obs  :" , N, "\n")
   cat(" ", "\n")
 
   invisible(list(
