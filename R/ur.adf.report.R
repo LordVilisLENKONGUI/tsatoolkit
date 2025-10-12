@@ -61,6 +61,7 @@ ur.adf.report <- function(y) {
   #trend.stats <- ct[ur.df.trend.rowselec, ]
   ur.df.trend.nlags <- ur.df.trend@lags
   ur.df.trend.stats <- ur.df.trend@teststat
+  ur.df.trend.stats[3] <- base::abs(ur.df.trend@testreg$coefficients[3,3])
   ur.df.trend.critval <- ur.df.trend@cval
   ur.df.trend.critval[3, ] <- ct[ur.df.trend.rowselec,] #trend.stats
   ur.df.trend.results <- cbind(t(round(ur.df.trend.stats,2)),ur.df.trend.critval)
@@ -72,6 +73,7 @@ ur.adf.report <- function(y) {
   #ur.df.drift.stats <- const[ur.df.drift.rowselec, ]
   ur.df.drift.nlags <- ur.df.drift@lags
   ur.df.drift.stats <- ur.df.drift@teststat
+  ur.df.drift.stats[2] <- base::abs(ur.df.drift@testreg$coefficients[1,3])
   ur.df.drift.critval <- ur.df.drift@cval
   ur.df.drift.critval[2, ] <- const[ur.df.drift.rowselec,] #drift.stats
   ur.df.drift.results <- cbind(t(round(ur.df.drift.stats,2)),ur.df.drift.critval)
@@ -93,7 +95,7 @@ ur.adf.report <- function(y) {
   cat("###################################", "\n")
   print(ur.df.trend.results)
   cat(" ", "\n")
-  if (ur.df.trend.results[3,1] < ur.df.trend.results[3,3]) {
+  if (base::abs(ur.df.trend.results@testreg$coefficients[3,3]) < ur.df.trend.results[3,3]) {
     cat("Trend not significant at 5%", "\n")
   }else cat("Trend significant at 5%", "\n")
   if (ur.df.trend.results[1,1] > ur.df.trend.results[1,3]) {
@@ -109,7 +111,7 @@ ur.adf.report <- function(y) {
   cat("###################################", "\n")
   print(ur.df.drift.results)
   cat(" ", "\n")
-  if (ur.df.drift.results[2,1] < ur.df.drift.results[2,3]) {
+  if (base::abs(ur.df.drift.results@testreg$coefficients[2,1]) < ur.df.drift.results[2,3]) {
     cat("Constant not significant at 5%", "\n")
   }else cat("Constant significant at 5%", "\n")
   if (ur.df.drift.results[1,1] > ur.df.drift.results[1,3]) {
