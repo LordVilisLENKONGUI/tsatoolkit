@@ -12,6 +12,8 @@ usethis::use_package("base")
 usethis::use_package("lmtest")
 usethis::use_package("tseries")
 usethis::use_package("MSwM")
+usethis::use_package("urca")
+usethis::use_package("greekLetters")
 usethis::use_build_ignore("devtools_history.R")
 
 

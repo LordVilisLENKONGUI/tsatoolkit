@@ -13,11 +13,11 @@ ljung.box.test(x, lags = 10, format = NULL, round = 3)
 
 \item{format}{Output format for the table: "rst", "pandoc" or "latex". If NULL, defaults to "rst"}
 
-\item{round}{numeric vector for round, default is set to 3}
+\item{round}{numeric value for rounding, default is set to 3}
 }
 \value{
-a knitr_kable formatted table with descriptive statistics
+a knitr_kable formatted table with Ljung-Box test results
 }
 \description{
-This function compute the Ljung-Box test statistic for examining the null hypothesis of no autocorrelation in a given time series
+This function computes the Ljung-Box test statistic for examining the null hypothesis of no autocorrelation in a given time series
 }
