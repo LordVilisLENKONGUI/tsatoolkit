@@ -132,7 +132,7 @@ ur.adf.report <- function(y) {
   if (ur.df.none.results[1,1] > ur.df.none.results[1,3]) {
     cat("Evidence of unit root at 5%", "\n")
   }else cat("Rejection of unit root at 5%", "\n")
-  cat("Lags :" , base::NROW(ur.df.none@testreg$coefficients)-1, "\n")
+  cat("Lags :" , base::NROW(ur.df.none@testreg$coefficients)-1 , "\n")
   cat("Obs  :" , N, "\n")
   cat(" ", "\n")
 
