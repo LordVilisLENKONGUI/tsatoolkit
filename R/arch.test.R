@@ -91,8 +91,16 @@ ARCH.test <- function(x, lags=10, format = NULL, round=3, demean=TRUE) {
   arch.ac <- stats::acf(uhat, lag.max = lags, plot = FALSE)$acf
   arch.ac <- base::round(arch.ac, round)
 
+  formatted_pvalues <- sapply(p_values, function(p) {
+    if (p < 0.001) {
+      "0.000"
+    } else {
+      format(round(p, round), nsmall = round)
+    }
+  })
+
   # Create results matrix
-  result <- cbind(1:lags, arch.ac[-1], LM_stats[-1], p_values[-1])
+  result <- cbind(1:lags, arch.ac[-1], LM_stats[-1], formatted_pvalues[-1])
   colnames(result) <- c("Lag", "AC", "ARCH-LM", "p-value")
 
   if (is.null(format)) {
