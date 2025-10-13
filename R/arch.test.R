@@ -4,33 +4,15 @@
 #' the presence of Autoregressive Conditional Heteroskedasticity (ARCH) effects
 #' in a time series or model residuals.
 #'
-#' @param x A fitted model object (e.g., \code{lm}, \code{ardl}, \code{dynlm},
-#'   \code{arma}, \code{ar}, \code{dynardl}, \code{MSM.lm}) or a numeric vector.
-#'   For model objects, residuals are automatically extracted.
-#'   For numeric vectors, the series is used directly, for fitted model squared residuals are used
+#' @param x Numeric vector or following models object are supported : \code{lm}, \code{ardl}, \code{dynlm},
+#'   \code{arma}, \code{ar}, \code{dynardl} and \code{MSM.lm}. or a numeric vector.
 #' @param lags Integer specifying the maximum number of lags to test for ARCH
-#'   effects. The function will test all lags from 1 to \code{lag}.
-#'   Must be less than the length of the series. Defaults to 10.
-#' @param format Character string specifying the output format for the table.
-#'   Accepts formats supported by \code{kableExtra::kable()}.
-#'   If \code{NULL}, uses "rst" format. Set to specific format for customized output.
-#' @param round Integer specifying the number of decimal places to round the
-#'   test statistics and p-values. Defaults to 3.
+#'   effects ; defaults to 10.
+#' @param format Character string specifying the output format for the table. Accepts formats supported
+#' by \code{kableExtra::kable()}.
+#' @param round Integer specifying the number of decimal to round; defaults to 3.
+#' @param demean Default is set to TRUE, then the vector not residual is demeaned
 #'
-#' @details
-#' The ARCH test is implemented using the Lagrange Multiplier (LM) test from
-#' \code{FinTS::ArchTest}. This is the standard approach in econometrics for
-#' testing ARCH effects. The test statistic follows a chi-squared distribution
-#' under the null hypothesis of no ARCH effects.
-#'
-#' For each lag from 1 to \code{lag}, the function computes:
-#' \itemize{
-#'   \item The ARCH LM test statistic using auxiliary regression
-#'   \item The corresponding p-value using the chi-squared distribution
-#' }
-#'
-#' The null hypothesis is that there are no ARCH effects (homoskedastic errors).
-#' The alternative hypothesis is the presence of ARCH effects (heteroskedastic errors).
 #'
 #' @return A formatted table (using \code{kableExtra::kable}) containing:
 #' \itemize{
@@ -55,14 +37,16 @@
 #' @importFrom stats residuals
 #' @importFrom kableExtra kable
 #' @export
-ARCH.test <- function(x, lags=10, format = NULL, round=3) {
+ARCH.test <- function(x, lags=10, format = NULL, round=3, demean=TRUE) {
 
-  # Extract residuals based on input type
-  if (is.numeric(x)) {
+
+  if (is.vector(x) && isTRUE(demean)) {
     # Store the name for display purposes
     series_name <- deparse(substitute(x))
-    # Use the series directly (no squaring needed for FinTS::ArchTest)
-    uhat <- x
+    uhat <- (x-base::mean(x))^2
+  }else if (is.vector(x) && !isTRUE(demean)) {
+    series_name <- deparse(substitute(x))
+    uhat <- (x)^2
   } else {
     model.class <- class(x)[1]  # Get class of the model
     # Extract residuals
@@ -86,32 +70,41 @@ ARCH.test <- function(x, lags=10, format = NULL, round=3) {
   # Create vectors to store LM statistics and p-values
   LM_stats <- numeric(lags)
   p_values <- numeric(lags)
+  arch.test.Matrix <- stats::embed(x, lags)
+
+
 
   # Calculate statistics for each lag from 1 to lag using FinTS::ArchTest
-  for (i in 1:lags) {
-    # Use FinTS::ArchTest function
-    arch_result <- FinTS::ArchTest(uhat, lags = i)
+  nlags <- 2:(lags+1)
+  for (p in nlags) {
 
-    # Extract LM statistic and p-value
-    LM_stats[i] <- base::round(arch_result$statistic, round)
-    p_values[i] <- base::round(arch_result$p.value, round)
+    matarch <- stats::embed(uhat, p)
+
+    arch.lm <- lm( matarch[,1]~matarch[,2:p] )
+    arch.lm.sum <- base::summary(arch.lm)
+
+    LM_stats[p] <- base::round(dim(arch.lm$model)[1]*arch.lm.sum$r.squared, round)
+    p_values[p] <- base::round(1 - stats::pchisq(LM_stats[p], df = dim(arch.lm.sum$coefficients)[1]-1 ), round)
+
   }
 
+  arch.ac <- stats::acf(uhat, lag.max = lags, plot = FALSE)$acf
+  arch.ac <- base::round(arch.ac, round)
+
   # Create results matrix
-  result <- cbind(1:lags, LM_stats, p_values)
-  colnames(result) <- c("lag", "ARCH-LM", "p-value")
+  result <- cbind(1:lags, arch.ac[-1], LM_stats[-1], p_values[-1])
+  colnames(result) <- c("Lag", "AC", "ARCH-LM", "p-value")
 
   if (is.null(format)) {
-    result <- kableExtra::kable(result, format = "rst", align = rep("c", ncol(result)),
+    result <- kableExtra::kable(result, format = "rst", align = c("c", "r", "c", "c" ),
                                 caption = "ARCH test")
   } else{
     #format <- match.arg(format)
     result <- kableExtra::kable(result, format = format,
-                                align = rep("c", ncol(result)),
+                                align = c("c", "r", "c", "c" ),
                                 booktable = T, booktabs = T,
                                 caption = "ARCH test")
   }
-
-  cat(sprintf("ARCH test based on %s", series_name))
+  #cat(sprintf("ARCH test based on %s", series_name))
   return(result)
 }

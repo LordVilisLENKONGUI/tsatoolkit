@@ -4,24 +4,21 @@
 \alias{ARCH.test}
 \title{ARCH Test for Conditional Heteroskedasticity}
 \usage{
-ARCH.test(x, lags = 10, format = NULL, round = 3)
+ARCH.test(x, lags = 10, format = NULL, round = 3, demean = TRUE)
 }
 \arguments{
-\item{x}{A fitted model object (e.g., \code{lm}, \code{ardl}, \code{dynlm},
-\code{arma}, \code{ar}, \code{dynardl}, \code{MSM.lm}) or a numeric vector.
-For model objects, residuals are automatically extracted.
-For numeric vectors, the series is used directly, for fitted model squared residuals are used}
+\item{x}{Numeric vector or following models object are supported : \code{lm}, \code{ardl}, \code{dynlm},
+\code{arma}, \code{ar}, \code{dynardl} and \code{MSM.lm}. or a numeric vector.}
 
 \item{lags}{Integer specifying the maximum number of lags to test for ARCH
-effects. The function will test all lags from 1 to \code{lag}.
-Must be less than the length of the series. Defaults to 10.}
+effects ; defaults to 10.}
 
-\item{format}{Character string specifying the output format for the table.
-Accepts formats supported by \code{kableExtra::kable()}.
-If \code{NULL}, uses "rst" format. Set to specific format for customized output.}
+\item{format}{Character string specifying the output format for the table. Accepts formats supported
+by \code{kableExtra::kable()}.}
 
-\item{round}{Integer specifying the number of decimal places to round the
-test statistics and p-values. Defaults to 3.}
+\item{round}{Integer specifying the number of decimal to round; defaults to 3.}
+
+\item{demean}{Default is set to TRUE, then the vector not residual is demeaned}
 }
 \value{
 A formatted table (using \code{kableExtra::kable}) containing:
@@ -35,21 +32,6 @@ A formatted table (using \code{kableExtra::kable}) containing:
 Performs an ARCH test using the Lagrange Multiplier (LM) approach to detect
 the presence of Autoregressive Conditional Heteroskedasticity (ARCH) effects
 in a time series or model residuals.
-}
-\details{
-The ARCH test is implemented using the Lagrange Multiplier (LM) test from
-\code{FinTS::ArchTest}. This is the standard approach in econometrics for
-testing ARCH effects. The test statistic follows a chi-squared distribution
-under the null hypothesis of no ARCH effects.
-
-For each lag from 1 to \code{lag}, the function computes:
-\itemize{
-\item The ARCH LM test statistic using auxiliary regression
-\item The corresponding p-value using the chi-squared distribution
-}
-
-The null hypothesis is that there are no ARCH effects (homoskedastic errors).
-The alternative hypothesis is the presence of ARCH effects (heteroskedastic errors).
 }
 \examples{
 \dontrun{
