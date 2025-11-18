@@ -117,9 +117,13 @@ describe <- function(object, type = c("short", "long"), format = NULL, round = 2
   #------------------------------------------------/
   options(knitr.kable.NA = "") # Hide NA values in output
 
-  # Construction robuste du vecteur digits
-  row_names <- rownames(result)
-  digits_vector <- ifelse(row_names %in% c("Obs", "NA's", " "), 0, round)
+  # Nombre de lignes dans result
+  n_rows <- nrow(result)
+  # Définir digits correctement : 0 pour Obs et NA's, round pour le reste
+  n_obs_na <- length(which(rownames(result) %in% c("Obs", "NA's"))) # Nombre de lignes Obs et NA's
+  digits_vector <- c(rep(0, n_obs_na),              # 0 décimales pour Obs et NA's
+                     rep(round, n_rows), # - n_obs_na - 2),  # round décimales pour les stats
+                     rep(0, 2))                         # 0 pour les lignes vides
 
   if (is.null(format)) {
     result <- kableExtra::kable(result, format = "rst", align = rep('c', ncol(result)),
