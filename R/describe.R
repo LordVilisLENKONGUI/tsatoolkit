@@ -69,14 +69,20 @@ describe <- function(object, type = c("short", "long"), format = NULL, round = 2
       NULL
     }
 
-    obs_stats <- if (sum(is.na(object)) != 0) {
-      c(
-        "Obs" = floor(as.integer(length(object))),
-        "NA's" = floor(sum(is.na(object)))
-      )
-    } else {
-      c("Obs" = floor(as.integer(length(object))))
-    }
+
+    obs_stats <- c(
+          "Obs" = floor(as.integer(length(object))),
+          "NA's" = if (sum(is.na(object)) != 0) floor(sum(is.na(object))) else NA
+        )
+
+    # obs_stats <- if (sum(is.na(object)) != 0) {
+    #   c(
+    #     "Obs" = floor(as.integer(length(object))),
+    #     "NA's" = if (sum(is.na(object)) != 0) floor(sum(is.na(object))) else NA
+    #   )
+    # } else {
+    #   c("Obs" = floor(as.integer(length(object))))
+    # }
 
     if (type == "long") {
       stats <- c(obs_stats, " " = NA, base_stats, " " = NA, dispersion, long_stats)
@@ -110,7 +116,15 @@ describe <- function(object, type = c("short", "long"), format = NULL, round = 2
       }
     }
     result <- apply(object, 2, calc_stat, type = type)
+
+    if (sum(is.na(object)) != 0) {
+      result <- result
+    } else {
+      result <- result[-2, ]
   }
+
+  }
+
 
   #------------------------------------------------/
   # Format and return output
@@ -118,20 +132,35 @@ describe <- function(object, type = c("short", "long"), format = NULL, round = 2
   options(knitr.kable.NA = "") # Hide NA values in output
 
   # Nombre de lignes dans result
-  n_rows <- nrow(result)
+  #n_rows <- nrow(result)
+  n_rows <- base::NROW(result)
   # Définir digits correctement : 0 pour Obs et NA's, round pour le reste
-  n_obs_na <- length(which(rownames(result) %in% c("Obs", "NA's"))) # Nombre de lignes Obs et NA's
-  digits_vector <- c(rep(0, n_obs_na),              # 0 décimales pour Obs et NA's
-                     rep(round, n_rows), # - n_obs_na - 2),  # round décimales pour les stats
-                     rep(0, 2))                         # 0 pour les lignes vides
+  n_obs_na <- length(which(names(result) %in% c("Obs", "NA's"))) # Nombre de lignes Obs et NA's
+  # Remplacer la section de calcul de digits par :
+  if (is.matrix(result)) {
+    # Créer une matrice de digits avec les mêmes dimensions
+    digits_matrix <- matrix(round, nrow = nrow(result), ncol = ncol(result))
 
+    # Mettre 0 pour les lignes Obs et NA's
+    obs_rows <- which(rownames(result) %in% c("Obs", "NA's"))
+    if (length(obs_rows) > 0) {
+      digits_matrix[obs_rows, ] <- 0
+    }
+
+    # Mettre 0 pour les lignes vides (espaces)
+    space_rows <- which(rownames(result) == " ")
+    if (length(space_rows) > 0) {
+      digits_matrix[space_rows, ] <- 0
+    }
+
+    digits_vector <- digits_matrix
+  }
   if (is.null(format)) {
     result <- kableExtra::kable(result, format = "rst", align = rep('c', ncol(result)),
-                                digits = digits_vector)
+                                digits = round)
   } else {
     result <- kableExtra::kable(result, format = format, align = rep('c', ncol(result)),
-                                booktabs = TRUE, digits = digits_vector)
+                                booktabs = TRUE, digits = round)
   }
-
   return(result)
 }
