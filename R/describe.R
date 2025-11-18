@@ -120,7 +120,7 @@ describe <- function(object, type = c("short", "long"), format = NULL, round = 2
   # Nombre de lignes dans result
   n_rows <- nrow(result)
   # Définir digits correctement : 0 pour Obs et NA's, round pour le reste
-  n_obs_na <- length(which(names(result) %in% c("Obs", "NA's"))) # Nombre de lignes Obs et NA's
+  n_obs_na <- length(which(rownames(result) %in% c("Obs", "NA's"))) # Nombre de lignes Obs et NA's
   digits_vector <- c(rep(0, n_obs_na),              # 0 décimales pour Obs et NA's
                      rep(round, n_rows - n_obs_na - 2),  # round décimales pour les stats
                      rep(0, 2))                         # 0 pour les lignes vides

@@ -14,7 +14,7 @@ tsDiagnostics(y, x = NULL, lags = 20)
 \item{lags}{Maximum number of lags to compute, default is 20}
 }
 \value{
-A combined plot of geom_line_plot, ACF and PACF using patchwork and KPSS test of stationary result
+A combined plot of geom_line_plot, ACF and PACF using patchwork and ADF test results
 }
 \description{
 Plot Ts, ACF and PACF figures
@@ -26,7 +26,8 @@ value <- rnorm(length(date))
 tsDiagnostics(x=date, y=value)
 
 # Example with only vector
-dataNA <- c(1:2, NA, 3:6, NA, 7:10)
+set.seed(1)
+dataNA <- c(NA,rnorm(54321))
 tsDiagnostics(y=dataNA)
 
 }

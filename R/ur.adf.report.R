@@ -57,7 +57,7 @@ ur.adf.report <- function(y) {
   }
 
 
-  ur.df.trend <- urca::ur.df(y, type='trend', lags = trunc(12 * (length(y)/100)^(1/4)), selectlags = "AIC")
+  ur.df.trend <- urca::ur.df(y, type='trend', lags = floor(10*(length(y)/100)^(2/9)) , selectlags = "AIC")
   ur.df.trend.rowselec <- get_rowselec(N)
   #trend.stats <- ct[ur.df.trend.rowselec, ]
   ur.df.trend.nlags <- ur.df.trend@lags
@@ -69,7 +69,7 @@ ur.adf.report <- function(y) {
   base::rownames(ur.df.trend.results) <- c(greekLetters::greeks("rho"), greekLetters::greeks("phi"), base::paste0(greekLetters::greeks("beta"),"t"))
 
 
-  ur.df.drift <- urca::ur.df(y, type='drift', lags = trunc(12 * (length(y)/100)^(1/4)), selectlags = "AIC")
+  ur.df.drift <- urca::ur.df(y, type='drift', lags = floor(10*(length(y)/100)^(2/9)) , selectlags = "AIC")
   ur.df.drift.rowselec <- get_rowselec(N)
   #ur.df.drift.stats <- const[ur.df.drift.rowselec, ]
   ur.df.drift.nlags <- ur.df.drift@lags
@@ -81,57 +81,65 @@ ur.adf.report <- function(y) {
   base::rownames(ur.df.drift.results) <- c(greekLetters::greeks("rho"), greekLetters::greeks("phi"))
 
 
-  ur.df.none <- urca::ur.df(y, type='none', lags = trunc(12 * (length(y)/100)^(1/4)), selectlags = "AIC")
+  ur.df.none <- urca::ur.df(y, type='none', lags = floor(10*(length(y)/100)^(2/9)) , selectlags = "AIC")
   ur.df.none.nlags <- ur.df.none@lags
   ur.df.none.stats <- ur.df.none@teststat
   ur.df.none.critval <- ur.df.none@cval
   ur.df.none.results <- cbind(t(round(ur.df.none.stats,2)),ur.df.none.critval)
   base::rownames(ur.df.none.results) <- c(greekLetters::greeks("rho"))
 
-  # print results
-
   # ADF Model 3
-  cat("###################################", "\n")
-  cat("## ADF Test : regression trend  ##", "\n")
-  cat("###################################", "\n")
+  cat(base::strrep("=", 36), "\n")
+  cat("|| ADF Test : regression trend ||", "\n")
+  cat(base::strrep("=", 36), "\n")
   print(ur.df.trend.results)
   cat(" ", "\n")
   if (ur.df.trend.results[3,1] < ur.df.trend.results[3,3]) {
-    cat("Trend not significant at 5%", "\n")
-  }else cat("Trend significant at 5%", "\n")
-  if (ur.df.trend.results[1,1] > ur.df.trend.results[1,3]) {
-    cat("Evidence of unit root at 5%", "\n")
-  }else cat("Rejection of unit root at 5%", "\n")
+    cat("Trend not significant", "\n")
+  }else cat("Trend significant", " * ", "\n")
+  if (ur.df.trend.results[1,1] < ur.df.trend.results[1,3]) { # UR Test --
+    cat("Rejection of unit root", "\n")
+  }else cat("Evidence of unit root", "\n")
   cat("Lags :" , base::NROW(ur.df.trend@testreg$coefficients)-3, "\n")
   cat("Obs  :" , N, "\n")
   cat(" ", "\n")
 
 
   # ADF Model 2
-  cat("###################################", "\n")
-  cat("## ADF Test : regression drift  ##", "\n")
-  cat("###################################", "\n")
+  cat(base::strrep("=", 36), "\n")
+  cat("|| ADF Test : regression drift  ||", "\n")
+  cat(base::strrep("=", 36), "\n")
   print(ur.df.drift.results)
   cat(" ", "\n")
   if (ur.df.drift.results[2,1] < ur.df.drift.results[2,3]) {
-    cat("Constant not significant at 5%", "\n")
-  }else cat("Constant significant at 5%", "\n")
-  if (ur.df.drift.results[1,1] > ur.df.drift.results[1,3]) {
-    cat("Evidence of unit root at 5%", "\n")
-  }else cat("Rejection of unit root at 5%", "\n")
+    cat("Constant not significant", "\n")
+  }else cat("Constant significant", " * ", "\n")
+  if (ur.df.drift.results[1,1] < ur.df.drift.results[1,3]) { # UR Test --
+    cat("Rejection of unit root", "\n")
+  }else cat("Evidence of unit root", "\n")
   cat("Lags :" , base::NROW(ur.df.drift@testreg$coefficients)-2, "\n")
   cat("Obs  :" , N, "\n")
   cat(" ", "\n")
 
   # ADF Model 1
-  cat("###################################", "\n")
-  cat("## ADF Test : regression none  ##", "\n")
-  cat("###################################", "\n")
+  cat(base::strrep("=", 36), "\n")
+  cat("|| ADF Test : regression none  ||", "\n")
+  cat(base::strrep("=", 36), "\n")
   print(ur.df.none.results)
   cat(" ", "\n")
-  if (ur.df.none.results[1,1] > ur.df.none.results[1,3]) {
-    cat("Evidence of unit root at 5%", "\n")
-  }else cat("Rejection of unit root at 5%", "\n")
+  if ((ur.df.trend.results[3,1] < ur.df.trend.results[3,3] & ur.df.drift.results[2,1] < ur.df.drift.results[2,3]) &
+      ur.df.none.results[1,1] > ur.df.none.results[1,3]) {
+    cat("Evidence of unit root", " * ", "\n")
+  } else if ((ur.df.trend.results[3,1] < ur.df.trend.results[3,3] & ur.df.drift.results[2,1] < ur.df.drift.results[2,3]) &
+             ur.df.none.results[1,1] < ur.df.none.results[1,3]) {
+    cat("Rejection of unit root", " * ", "\n")
+  } else if ((ur.df.trend.results[3,1] > ur.df.trend.results[3,3] | ur.df.drift.results[2,1] > ur.df.drift.results[2,3]) &
+             ur.df.none.results[1,1] > ur.df.none.results[1,3]) {
+    cat("Evidence of unit root", "\n")
+  } else if ((ur.df.trend.results[3,1] > ur.df.trend.results[3,3] | ur.df.drift.results[2,1] > ur.df.drift.results[2,3]) &
+             ur.df.none.results[1,1] < ur.df.none.results[1,3]) {
+    cat("Rejection of unit root", "\n")
+  }
   cat("Lags :" , base::NROW(ur.df.none@testreg$coefficients)-1 , "\n")
   cat("Obs  :" , N, "\n")
   cat(" ", "\n")
@@ -141,6 +149,4 @@ ur.adf.report <- function(y) {
     drift = ur.df.drift.results,
     none = ur.df.none.results
   ))
-
-
 }

@@ -4,17 +4,15 @@
 \alias{white.test}
 \title{White Test for Heteroskedasticity}
 \usage{
-white.test(model, on.fitted = TRUE, summary = FALSE)
+white.test(model, summary = FALSE)
 }
 \arguments{
-\item{model}{model to be tested itted "lm" object}
-
-\item{on.fitted}{logical. If set to TRUE instead of same explanatory variables White test fits a linear regression model of the residuals on fitted value}
+\item{model}{fitted model object (lm, dynlm, ardl, etc.)}
 
 \item{summary}{logical. If set to TRUE summary statistics of the fitted linear model is printed}
 }
 \value{
-A list containing the test statistic and p-value.
+An object of class "htest" containing the test statistic and p-value.
 }
 \description{
 White Test for Heteroskedasticity

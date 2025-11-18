@@ -33,11 +33,17 @@
 #' @seealso
 #' \code{\link[FinTS]{ArchTest}} for the underlying ARCH LM test implementation.
 #'
-#' @importFrom FinTS ArchTest
 #' @importFrom stats residuals
 #' @importFrom kableExtra kable
 #' @export
-ARCH.test <- function(x, lags=10, format = NULL, round=3, demean=TRUE) {
+ARCH.LM.test <- function(x, lags=10, format = NULL, round=3, demean=TRUE) {
+
+
+  if (is.vector(x)) {
+    if (any(is.na(x))) {
+      x <- x[!is.na(x)]
+    }
+  }
 
 
   if (is.vector(x) && isTRUE(demean)) {
@@ -80,7 +86,7 @@ ARCH.test <- function(x, lags=10, format = NULL, round=3, demean=TRUE) {
 
     matarch <- stats::embed(uhat, p)
 
-    arch.lm <- lm( matarch[,1]~matarch[,2:p] )
+    arch.lm <- stats::lm( matarch[,1]~matarch[,2:p] )
     arch.lm.sum <- base::summary(arch.lm)
 
     LM_stats[p] <- base::round(dim(arch.lm$model)[1]*arch.lm.sum$r.squared, round)
@@ -89,7 +95,7 @@ ARCH.test <- function(x, lags=10, format = NULL, round=3, demean=TRUE) {
   }
 
   arch.ac <- stats::acf(uhat, lag.max = lags, plot = FALSE)$acf
-  arch.ac <- base::round(arch.ac, round)
+  arch.ac <- base::as.numeric(base::sprintf("%12.3f", arch.ac))
 
   formatted_pvalues <- sapply(p_values, function(p) {
     if (p < 0.001) {

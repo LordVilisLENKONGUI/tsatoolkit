@@ -1,65 +1,80 @@
 #' White Test for Heteroskedasticity
 #'
-#' @param model model to be tested itted "lm" object
-#' @param on.fitted logical. If set to TRUE instead of same explanatory variables White test fits a linear regression model of the residuals on fitted value
+#' @param model fitted model object (lm, dynlm, ardl, etc.)
 #' @param summary logical. If set to TRUE summary statistics of the fitted linear model is printed
 #'
-#' @returns A list containing the test statistic and p-value.
+#' @returns An object of class "htest" containing the test statistic and p-value.
 #' @export
 #'
-white.test <- function(model, on.fitted = TRUE, summary=FALSE) {
+white.test <- function(model, summary = FALSE) {
 
-  if (!inherits(model, "formula")) { # Si un modèle est passé en paramètre
-    # Création de la matrice de design X à partir du modèle
-    X = stats::model.matrix(stats::terms(model), stats::model.frame(model))
-    # Suppression des colonnes constantes (où toutes les valeurs sont 1)
-    X = X[, which(colSums(X == 1) != nrow(X))]
-    # Extraction de la variable réponse
-    y = stats::model.response(stats::model.frame(model))
-
-    resid = stats::lm.fit(X, y)$residuals # residuals from original model
-    squared_residuals <- resid^2
-    fitted = stats::lm.fit(X, y)$fitted
-
-
-    # Création des termes quadratiques
-    X_2 = X^2
-    base::colnames(X_2) = base::paste0(colnames(X_2), "^2")
-    # Combinaison des termes linéaires et quadratiques
-    X = base::cbind(X, X_2)
+  # Vérification que l'objet est un modèle valide
+  valid_classes <- c("lm", "ardl", "dynlm", "arma", "ar", "dynardl", "MSM.lm", "glm")
+  if (!inherits(model, valid_classes)) {
+    stop("model must be one of: ", paste(valid_classes, collapse = ", "))
   }
 
-  n = nrow(X) # Number of observations
-  k = ncol(X) # Number of coefs
+  model.class <- class(model)[1]  # Get class of the model
 
+  # Extract residuals
+  uhat2 <- (switch(model.class,
+                   "lm" = residuals(model),
+                   "ardl" = residuals(model),
+                   "dynlm" = residuals(model),
+                   "arma" = residuals(model),
+                   "ar" = residuals(model),
+                   "dynardl" = model$model$residuals,
+                   "MSM.lm" = MSwM::msmResid(model),
+                   residuals(model)))^2  # Default to residuals() if class not matched
 
-  if (on.fitted == FALSE) {
-    white.model <- stats::lm(squared_residuals ~ X)
-    method <- "White LM test on explanatory"
-  } else if (on.fitted == TRUE) {
-    white.model <- stats::lm(squared_residuals ~ fitted + I(fitted^2))
-    method <- "White LM test on fitted"
-  }
+  # Extract fitted values
+  fitted.values <- (switch(model.class,
+                             "lm" = stats::fitted.values(model),
+                             "ardl" = stats::fitted.values(model),
+                             "dynlm" = stats::fitted.values(model),
+                             "arma" = stats::fitted.values(model),
+                             "ar" = stats::fitted.values(model),
+                             "dynardl" = model$model$fitted.values,
+                             "MSM.lm" = MSwM::msmResid(model),
+                             residuals(model)))
 
+  # White regression: regress squared residuals on fitted values and their square
+  white.model <- stats::lm(uhat2 ~ fitted.values + I(fitted.values^2))
 
-  # Calcul de la statistique de BP
-  R2 = summary(white.model)$r.squared
-  BP_stat = n * R2
+  method <- "White LM test on fitted values"
 
-  # Calcul de la p-value (distribution chi-carré)
-  df = ifelse(on.fitted==TRUE, 2, k)  # degrés de liberté selon l'option fitted
-  p_value = 1 - stats::pchisq(BP_stat, df = df)
+  # Number of observations and parameters
+  n <- nrow(stats::model.matrix(white.model))  # Nb obs
+  k <- ncol(stats::model.matrix(white.model)) - 1  # Nb parameters excluding intercept
 
-  if (summary==TRUE) {
+  # Calculate White statistic: n * R²
+  R2 <- summary(white.model)$r.squared
+  W_stat <- n * R2
+
+  # Calculate p-value (chi-square distribution with k degrees of freedom)
+  p_value <- 1 - stats::pchisq(W_stat, df = k)
+
+  # Print summary if requested
+  if (summary == TRUE) {
+    cat("\n", strrep("=", 62), "\n", sep = "")
+    cat("\n", strrep("=", 62), "\n", sep = "")
     print(stats::summary.lm(white.model))
+    cat("\n", strrep("=", 62), "\n", sep = "")
+    cat("\n", strrep("=", 62), "\n", sep = "")
   }
 
-  RVAL <- structure(list(statistic = c("W" = BP_stat),
-                         parameter = c("df" = df),
-                         method = method,
-                         p.value= p_value,
-                         null.value = "Homoscedasticity"),
-                    class = "htest")
+  # Create htest object
+  RVAL <- structure(
+    list(
+      statistic = c("W" = W_stat),
+      parameter = c("df" = k),
+      method = method,
+      p.value = p_value,
+      data.name = deparse(substitute(model)),
+      null.value = c("Homoscedasticity" = 0)
+    ),
+    class = "htest"
+  )
 
   return(RVAL)
 }

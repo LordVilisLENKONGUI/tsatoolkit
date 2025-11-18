@@ -10,7 +10,7 @@
 #' @returns a knitr_kable formatted table with Ljung-Box test results
 #' @export
 #'
-ljung.box.test <- function(x, lags = 10, format = NULL, round = 3) {
+Ljung.Box.test <- function(x, lags = 10, format = NULL, round = 3) {
   n <- length(x)
   if (lags >= n) {
     stop("lags must be less than the length of the series")
@@ -50,7 +50,7 @@ ljung.box.test <- function(x, lags = 10, format = NULL, round = 3) {
   # Create results data frame (not matrix) for better control
   result <- data.frame(
     Lag = 1:lags,
-    AC = ac_values,
+    AC = base::as.numeric(base::sprintf("%12.3f", ac_values)),
     Q = Q_stats,
     "p-value" = formatted_pvalues,
     check.names = FALSE
