@@ -26,3 +26,6 @@ Imports:
     stats,
     tseries,
     urca
+Depends: 
+    R (>= 3.5)
+LazyData: true

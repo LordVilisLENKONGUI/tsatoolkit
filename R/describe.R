@@ -22,145 +22,135 @@
 #' # Example with missing values
 #' describe(c(NA, rnorm(1997)))
 #'
-#' @importFrom kableExtra kable
+#' @importFrom kableExtra kable row_spec
 #' @importFrom moments skewness kurtosis
 #' @export
 describe <- function(object, type = c("short", "long"), format = NULL, round = 2) {
 
-  if (any(sapply(c("mts", "ts", "matrix", "array", "tbl_df", "tbl"), function(x) inherits(object, x)))) {
-    object <- base::as.matrix(object)
+  # Conversion des types spéciaux en matrice
+  special_classes <- c("mts", "ts", "matrix", "array", "tbl_df", "tbl")
+  if (any(sapply(special_classes, function(x) inherits(object, x)))) {
+    object <- as.matrix(object)
   }
 
   type <- match.arg(type)
 
   #------------------------------------------------/
-  # Internal function to calculate statistics
+  # Fonction interne de calcul des statistiques
   #------------------------------------------------/
-  calc_stat <- function(object, type) {
-    moyenne <- base::mean(object, na.rm = TRUE)
-    stdev <- stats::sd(object, na.rm = TRUE)
+  calc_stat <- function(x, type) {
+    n <- length(x)
+    n_na <- sum(is.na(x))
+    moyenne <- mean(x, na.rm = TRUE)
+    stdev <- sd(x, na.rm = TRUE)
 
-    base_stats <- c(
-      Minimum = base::min(object, na.rm = TRUE),
-      "Q1" = stats::quantile(object, 0.25, na.rm = TRUE),
-      Median = stats::median(object, na.rm = TRUE),
-      Mean = base::mean(object, na.rm = TRUE),
-      "Q3" = stats::quantile(object, 0.75, na.rm = TRUE),
-      Maximum = base::max(object, na.rm = TRUE)
+    stats <- c(
+      Obs = n,
+      "NA's" = if (n_na > 0) n_na else NA,
+      Minimum = min(x, na.rm = TRUE),
+      Q1 = unname(quantile(x, 0.25, na.rm = TRUE)),
+      Median = median(x, na.rm = TRUE),
+      Mean = moyenne,
+      Q3 = unname(quantile(x, 0.75, na.rm = TRUE)),
+      Maximum = max(x, na.rm = TRUE),
+      Std.Dev = stdev
     )
-
-    dispersion <- c(
-      "Std.Dev" = stats::sd(object, na.rm = TRUE),
-      "Coef.Var" = if (moyenne != 0) (stdev / moyenne) * 100 else NA
-    )
-
-    long_stats <- if (type == "long") {
-      c(
-        "Skewness" = tryCatch(
-          moments::skewness(stats::na.omit(object)),
-          error = function(e) NA
-        ),
-        "Kurtosis" = tryCatch(
-          moments::kurtosis(stats::na.omit(object)),
-          error = function(e) NA
-        )
-      )
-    } else {
-      NULL
-    }
-
-
-    obs_stats <- c(
-          "Obs" = floor(as.integer(length(object))),
-          "NA's" = if (sum(is.na(object)) != 0) floor(sum(is.na(object))) else NA
-        )
-
-    # obs_stats <- if (sum(is.na(object)) != 0) {
-    #   c(
-    #     "Obs" = floor(as.integer(length(object))),
-    #     "NA's" = if (sum(is.na(object)) != 0) floor(sum(is.na(object))) else NA
-    #   )
-    # } else {
-    #   c("Obs" = floor(as.integer(length(object))))
-    # }
 
     if (type == "long") {
-      stats <- c(obs_stats, " " = NA, base_stats, " " = NA, dispersion, long_stats)
-    } else {
-      stats <- c(obs_stats, " " = NA, base_stats, " " = NA, dispersion)
+      x_clean <- na.omit(x)
+      stats <- c(stats,
+                 Coef.Var = if (moyenne != 0) (stdev / moyenne) * 100 else NA,
+                 Skewness = tryCatch(moments::skewness(x_clean), error = function(e) NA),
+                 Kurtosis = tryCatch(moments::kurtosis(x_clean), error = function(e) NA)
+      )
     }
-    return(stats)
+
+    stats
   }
 
   #------------------------------------------------/
-  # Main function processing
+  # Fonction pour aligner les nombres sur le point décimal
   #------------------------------------------------/
-  if (is.vector(object)) {
-    if (is.character(object)) {
-      return(base::summary(object))
-    } else {
-      result <- calc_stat(object, type)
-      result <- as.matrix(result)
-      colnames(result) <- deparse(substitute(object))
+  align_decimal <- function(x, decimals = 2) {
+    int_cols <- c("Obs", "NA's")
+
+    result <- matrix("", nrow = nrow(x), ncol = ncol(x),
+                     dimnames = list(rownames(x), colnames(x)))
+
+    for (col in colnames(x)) {
+      vals <- x[, col]
+      col_name_width <- nchar(col)
+
+      if (col %in% int_cols) {
+        # Entiers : pas de décimales
+        formatted <- ifelse(is.na(vals), "", sprintf("%d", as.integer(vals)))
+      } else {
+        # Décimaux : formatage fixe
+        formatted <- ifelse(is.na(vals), "", sprintf(paste0("%.", decimals, "f"), vals))
+      }
+
+      # Largeur max entre les données et le nom de colonne
+      max_data_width <- max(nchar(formatted), na.rm = TRUE)
+      target_width <- max(max_data_width, col_name_width)
+
+      # Aligner les données à droite dans cette largeur
+      result[, col] <- sprintf(paste0("%", target_width, "s"), formatted)
+
+      # Centrer le nom de colonne
+      padding_total <- target_width - col_name_width
+      pad_left <- floor(padding_total / 2)
+      pad_right <- ceiling(padding_total / 2)
+      colnames(result)[colnames(result) == col] <- paste0(
+        strrep(" ", pad_left), col, strrep(" ", pad_right)
+      )
     }
+    result
+  }
+
+  #------------------------------------------------/
+  # Traitement principal
+  #------------------------------------------------/
+  if (is.vector(object) && !is.list(object)) {
+    if (is.character(object)) {
+      return(summary(object))
+    }
+    result <- t(as.matrix(calc_stat(object, type)))
+    rownames(result) <- deparse(substitute(object))
   } else {
+    # Filtrer les colonnes numériques pour les data.frames
     if (is.data.frame(object)) {
       numeric_cols <- sapply(object, is.numeric)
       if (sum(numeric_cols) == 0) {
         stop("No numeric columns found in the input DataFrame")
       }
       object <- object[, numeric_cols, drop = FALSE]
-    } else if (is.matrix(object)) {
-      if (!is.numeric(object)) {
-        stop("Matrix must be numeric")
-      }
+    } else if (is.matrix(object) && !is.numeric(object)) {
+      stop("Matrix must be numeric")
     }
-    result <- apply(object, 2, calc_stat, type = type)
 
-    if (sum(is.na(object)) != 0) {
-      result <- result
-    } else {
-      result <- result[-2, ]
+    # Calcul des statistiques pour chaque colonne
+    result <- t(apply(object, 2, calc_stat, type = type))
   }
 
+  # Supprimer la colonne NA's si aucune valeur manquante
+  if (all(is.na(result[, "NA's"]))) {
+    result <- result[, colnames(result) != "NA's", drop = FALSE]
   }
 
+  # Appliquer l'alignement décimal
+  result <- align_decimal(result, decimals = round)
 
   #------------------------------------------------/
-  # Format and return output
+  # Formatage et retour
   #------------------------------------------------/
-  options(knitr.kable.NA = "") # Hide NA values in output
+  options(knitr.kable.NA = "")
 
-  # Nombre de lignes dans result
-  #n_rows <- nrow(result)
-  n_rows <- base::NROW(result)
-  # Définir digits correctement : 0 pour Obs et NA's, round pour le reste
-  n_obs_na <- length(which(names(result) %in% c("Obs", "NA's"))) # Nombre de lignes Obs et NA's
-  # Remplacer la section de calcul de digits par :
-  if (is.matrix(result)) {
-    # Créer une matrice de digits avec les mêmes dimensions
-    digits_matrix <- matrix(round, nrow = nrow(result), ncol = ncol(result))
+  fmt <- if (is.null(format)) "rst" else format
 
-    # Mettre 0 pour les lignes Obs et NA's
-    obs_rows <- which(rownames(result) %in% c("Obs", "NA's"))
-    if (length(obs_rows) > 0) {
-      digits_matrix[obs_rows, ] <- 0
-    }
-
-    # Mettre 0 pour les lignes vides (espaces)
-    space_rows <- which(rownames(result) == " ")
-    if (length(space_rows) > 0) {
-      digits_matrix[space_rows, ] <- 0
-    }
-
-    digits_vector <- digits_matrix
-  }
-  if (is.null(format)) {
-    result <- kableExtra::kable(result, format = "rst", align = rep('c', ncol(result)),
-                                digits = round)
-  } else {
-    result <- kableExtra::kable(result, format = format, align = rep('c', ncol(result)),
-                                booktabs = TRUE, digits = round)
-  }
-  return(result)
+  kableExtra::kable(
+    result,
+    format = fmt,
+    align = rep("r", ncol(result)),
+    booktabs = if (!is.null(format)) TRUE else FALSE
+  )
 }
